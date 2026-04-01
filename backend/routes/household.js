@@ -163,6 +163,38 @@ router.put('/:id', protect, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+// @route   GET /api/households/member
+// @desc    Get household details for the logged-in household member
+// @access  Private
+router.get('/member',async (req, res) => {
+  try {
+    // Find the household where the user is a member
+    const household = await Household.findOne({ members: req.user.id })
+      .populate('nyumbaKumiZone', 'name')
+      .populate('members', 'name email phoneNumber');
+
+    if (!household) {
+      return res.status(404).json({ message: 'You are not associated with any household' });
+    }
+
+    // Fetch tasks assigned to this household
+    const tasks = await Task.find({ householdId: household._id });
+
+    // Fetch alerts related to the household's zone
+    const alerts = await Alert.find({ zoneId: household.nyumbaKumiZone });
+
+    res.status(200).json({
+      success: true,
+      household,
+      tasks,
+      alerts
+    });
+  } catch (err) {
+    console.error('Error fetching household member data:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 // @route   POST /api/households/:id/members
 // @desc    Add a user to household members

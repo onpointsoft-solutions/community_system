@@ -5,7 +5,7 @@ const { protect } = require('../middleware/auth');
 const Task = require('../models/Task');
 const User = require('../models/User');
 const Household = require('../models/Household');
-
+const sendTaskEmails = require('../utils/sendTaskEmails');
 // @route   GET api/tasks
 // @desc    Get all tasks (filtered by query params)
 // @access  Private
@@ -138,7 +138,8 @@ router.post('/',
       });
       
       await task.save();
-      
+      await sendTaskEmails(req.body.zone, req.body);
+      // Create the alert in the database
       res.json({
         success: true,
         data: task

@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await axios.get('/api/auth/me');
+        const res = await axios.get('http://localhost:5000/api/auth/me');
         setUser(res.data.data);
         setIsAuthenticated(true);
         setLoading(false);
@@ -47,38 +47,18 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setLoading(true);
-      setError(null);
+      const res = await axios.post('http://localhost:5000/api/auth/regist', userData);
       
-      const res = await axios.post('/api/auth/register', userData);
-      
-      if (res.data.success) {
-        const { token, user } = res.data;
-        
-        // Store token and user data
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Update context
-        setToken(token);
-        setUser(user);
-        setIsAuthenticated(true);
-        
-        return { 
-          success: true, 
-          password: userData.password // Return the original password
-        };
-      } else {
-        throw new Error(res.data.message || 'Registration failed');
-      }
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
-      setError(errorMessage);
-      return { 
-        success: false, 
-        error: errorMessage 
-      };
-    } finally {
+      localStorage.setItem('token', res.data.token);
+      setToken(res.data.token);
+      setUser(res.data.user);
+      setIsAuthenticated(true);
       setLoading(false);
+      return { success: true };
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed');
+      setLoading(false);
+      return { success: false, error: err.response?.data?.message || 'Registration failed' };
     }
   };
 
@@ -86,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setLoading(true);
-      const res = await axios.post('/login', { email, password });
+      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
       
       localStorage.setItem('token', res.data.token);
       setToken(res.data.token);
